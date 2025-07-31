@@ -1,0 +1,4 @@
+# Dependências Python do projeto
+# Adicione suas dependências aqui, por exemplo:
+# requests==2.31.0
+# boto3==1.34.0 

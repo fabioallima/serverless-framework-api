@@ -12,19 +12,19 @@ authorAvatar: 'https://avatars1.githubusercontent.com/u/13742415?s=200&v=4'
 
 # Serverless Framework Python HTTP API on AWS
 
-This template demonstrates how to make a simple HTTP API with Python running on AWS Lambda and API Gateway using the Serverless Framework.
+Este template demonstra como criar uma API HTTP simples com Python rodando no AWS Lambda e API Gateway usando o Serverless Framework.
 
-This template does not include any kind of persistence (database). For more advanced examples, check out the [serverless/examples repository](https://github.com/serverless/examples/) which includes DynamoDB, Mongo, Fauna and other examples.
+Este template não inclui nenhum tipo de persistência (banco de dados). Para exemplos mais avançados, confira o [repositório serverless/examples](https://github.com/serverless/examples/) que inclui exemplos com DynamoDB, Mongo, Fauna e outros.
 
-## Usage
+## Uso
 
-### Deployment
+### Deploy Manual
 
 ```
 serverless deploy
 ```
 
-After deploying, you should see output similar to:
+Após o deploy, você deve ver uma saída similar a:
 
 ```
 Deploying "aws-python-http-api" to stage "dev" (us-east-1)
@@ -36,17 +36,17 @@ functions:
   hello: aws-python-http-api-dev-hello (2.3 kB)
 ```
 
-_Note_: In current form, after deployment, your API is public and can be invoked by anyone. For production deployments, you might want to configure an authorizer. For details on how to do that, refer to [http event docs](https://www.serverless.com/framework/docs/providers/aws/events/apigateway/).
+_Nota_: Na forma atual, após o deploy, sua API é pública e pode ser invocada por qualquer pessoa. Para deploys em produção, você pode querer configurar um autorizador. Para detalhes sobre como fazer isso, consulte a [documentação de eventos http](https://www.serverless.com/framework/docs/providers/aws/events/apigateway/).
 
 ### Invocation
 
-After successful deployment, you can call the created application via HTTP:
+Após o deploy bem-sucedido, você pode chamar a aplicação criada via HTTP:
 
 ```
 curl https://xxxxxxx.execute-api.us-east-1.amazonaws.com/
 ```
 
-Which should result in response similar to the following (removed `input` content for brevity):
+Que deve resultar em uma resposta similar à seguinte:
 
 ```json
 {
@@ -56,13 +56,13 @@ Which should result in response similar to the following (removed `input` conten
 
 ### Local development
 
-You can invoke your function locally by using the following command:
+Você pode invocar sua função localmente usando o seguinte comando:
 
 ```
 serverless invoke local --function hello
 ```
 
-Which should result in response similar to the following:
+Que deve resultar em uma resposta similar à seguinte:
 
 ```json
 {
@@ -71,28 +71,129 @@ Which should result in response similar to the following:
 }
 ```
 
-Alternatively, it is also possible to emulate API Gateway and Lambda locally by using `serverless-offline` plugin. In order to do that, execute the following command:
+Alternativamente, também é possível emular o API Gateway e Lambda localmente usando o plugin `serverless-offline`. Para fazer isso, execute o seguinte comando:
 
 ```
 serverless plugin install -n serverless-offline
 ```
 
-It will add the `serverless-offline` plugin to `devDependencies` in `package.json` file as well as will add it to `plugins` in `serverless.yml`.
+Isso irá adicionar o plugin `serverless-offline` às `devDependencies` no arquivo `package.json` e também adicioná-lo aos `plugins` no `serverless.yml`.
 
-After installation, you can start local emulation with:
+Após a instalação, você pode iniciar a emulação local com:
 
 ```
 serverless offline
 ```
 
-To learn more about the capabilities of `serverless-offline`, please refer to its [GitHub repository](https://github.com/dherault/serverless-offline).
+Para saber mais sobre as capacidades do `serverless-offline`, consulte seu [repositório GitHub](https://github.com/dherault/serverless-offline).
 
 ### Bundling dependencies
 
-In case you would like to include 3rd party dependencies, you will need to use a plugin called `serverless-python-requirements`. You can set it up by running the following command:
+Caso você queira incluir dependências de terceiros, você precisará usar um plugin chamado `serverless-python-requirements`. Você pode configurá-lo executando o seguinte comando:
 
 ```
 serverless plugin install -n serverless-python-requirements
 ```
 
-Running the above will automatically add `serverless-python-requirements` to `plugins` section in your `serverless.yml` file and add it as a `devDependency` to `package.json` file. The `package.json` file will be automatically created if it doesn't exist beforehand. Now you will be able to add your dependencies to `requirements.txt` file (`Pipfile` and `pyproject.toml` is also supported but requires additional configuration) and they will be automatically injected to Lambda package during build process. For more details about the plugin's configuration, please refer to [official documentation](https://github.com/UnitedIncome/serverless-python-requirements).
+Executar o comando acima irá automaticamente adicionar `serverless-python-requirements` à seção `plugins` no seu arquivo `serverless.yml` e adicioná-lo como uma `devDependency` no arquivo `package.json`. O arquivo `package.json` será automaticamente criado se não existir. Agora você poderá adicionar suas dependências ao arquivo `requirements.txt` (`Pipfile` e `pyproject.toml` também são suportados, mas requerem configuração adicional) e elas serão automaticamente injetadas no pacote Lambda durante o processo de build. Para mais detalhes sobre a configuração do plugin, consulte a [documentação oficial](https://github.com/UnitedIncome/serverless-python-requirements).
+
+## GitHub Actions - Deploy Automático
+
+Este projeto está configurado para fazer deploy automático usando GitHub Actions sempre que houver push para a branch principal.
+
+### Pré-requisitos
+
+1. **Conta AWS** com permissões para:
+   - Lambda
+   - API Gateway
+   - CloudFormation
+   - IAM (para criar roles)
+
+2. **Conta Serverless Framework** (gratuita para projetos pessoais)
+
+### Configuração dos Secrets
+
+Você precisa configurar os seguintes secrets no seu repositório GitHub:
+
+#### 1. Acesse as configurações do repositório
+- Vá para `Settings` > `Secrets and variables` > `Actions`
+- Clique em `New repository secret`
+
+#### 2. Configure os secrets necessários
+
+**AWS Credentials:**
+- **AWS_ACCESS_KEY_ID**: Sua AWS Access Key ID
+- **AWS_SECRET_ACCESS_KEY**: Sua AWS Secret Access Key
+
+**Serverless Framework:**
+- **SERVERLESS_ACCESS_KEY**: Sua chave de acesso do Serverless Framework
+
+### Como obter as credenciais
+
+#### AWS Credentials
+1. Acesse o [AWS IAM Console](https://console.aws.amazon.com/iam/)
+2. Crie um novo usuário ou use um existente
+3. Anexe a política `AdministratorAccess` (ou uma política mais restrita)
+4. Crie Access Keys
+5. Copie o Access Key ID e Secret Access Key
+
+#### Serverless Framework Access Key
+1. Acesse [Serverless Dashboard](https://app.serverless.com/)
+2. Vá para `Access Keys`
+3. Crie uma nova Access Key
+4. Copie a chave gerada
+
+### Como funciona o workflow
+
+O workflow criado em `.github/workflows/deploy.yml` irá:
+
+1. **Trigger**: Executar quando houver push para `main` ou `master`
+2. **Setup**: Configurar Python 3.12 e Node.js 18
+3. **Instalação**: Instalar o Serverless Framework globalmente
+4. **Credenciais**: Configurar as credenciais AWS
+5. **Dependências**: Instalar dependências Python (se houver)
+6. **Deploy**: Fazer deploy da aplicação para AWS
+7. **Output**: Mostrar informações do deploy
+
+### Personalização
+
+#### Mudar a região AWS
+Edite o arquivo `.github/workflows/deploy.yml` e altere:
+```yaml
+env:
+  AWS_REGION: us-east-1  # Mude para sua região preferida
+```
+
+#### Adicionar dependências Python
+1. Adicione suas dependências no arquivo `requirements.txt`
+2. O workflow irá instalá-las automaticamente
+
+#### Deploy apenas em tags
+Para fazer deploy apenas quando criar uma tag, altere o trigger:
+```yaml
+on:
+  push:
+    tags:
+      - 'v*'
+```
+
+### Troubleshooting
+
+#### Erro de permissões AWS
+- Verifique se as credenciais AWS estão corretas
+- Confirme se o usuário AWS tem as permissões necessárias
+
+#### Erro do Serverless Framework
+- Verifique se o `SERVERLESS_ACCESS_KEY` está configurado corretamente
+- Confirme se sua conta Serverless Framework está ativa
+
+#### Erro de deploy
+- Verifique os logs do GitHub Actions para mais detalhes
+- Confirme se o `serverless.yml` está configurado corretamente
+
+### Próximos passos para GitHub Actions
+
+1. Configure os secrets no GitHub
+2. Faça push para a branch `main`
+3. Verifique se o deploy foi executado com sucesso
+4. Acesse o endpoint da API gerado
