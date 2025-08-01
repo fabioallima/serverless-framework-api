@@ -10,92 +10,114 @@ authorName: 'Serverless, Inc.'
 authorAvatar: 'https://avatars1.githubusercontent.com/u/13742415?s=200&v=4'
 -->
 
-# Serverless Framework Python HTTP API on AWS
+# Serverless Framework API - SNS/SQS Integration
 
-Este template demonstra como criar uma API HTTP simples com Python rodando no AWS Lambda e API Gateway usando o Serverless Framework.
+Este projeto implementa uma arquitetura serverless usando AWS Lambda, API Gateway, SNS e SQS.
 
-Este template não inclui nenhum tipo de persistência (banco de dados). Para exemplos mais avançados, confira o [repositório serverless/examples](https://github.com/serverless/examples/) que inclui exemplos com DynamoDB, Mongo, Fauna e outros.
-
-## Uso
-
-### Deploy Manual
+## Arquitetura
 
 ```
+API Gateway → SNS Topic → SQS Queue → Lambda Function
+```
+
+### Fluxo de dados:
+1. **API Gateway**: Recebe requisições HTTP POST
+2. **Lambda (apiHandler)**: Processa a requisição e publica no tópico SNS
+3. **SNS Topic**: Distribui mensagens para assinantes
+4. **SQS Queue**: Recebe mensagens do SNS
+5. **Lambda (sqsHandler)**: Processa mensagens da fila SQS
+
+## Recursos AWS Criados
+
+- **API Gateway**: Endpoint HTTP para receber requisições
+- **SNS Topic**: Tópico para distribuição de mensagens
+- **SQS Queue**: Fila principal para processamento
+- **SQS Dead Letter Queue**: Fila para mensagens que falharam
+- **IAM Roles**: Permissões necessárias para as funções Lambda
+
+## Como usar
+
+### 1. Deploy da aplicação
+
+```bash
+# Instalar dependências
+npm install -g serverless
+
+# Deploy
 serverless deploy
 ```
 
-Após o deploy, você deve ver uma saída similar a:
+### 2. Testar a API
 
-```
-Deploying "aws-python-http-api" to stage "dev" (us-east-1)
+Após o deploy, você receberá uma URL do API Gateway. Use-a para testar:
 
-✔ Service deployed to stack aws-python-http-api-dev (85s)
-
-endpoint: GET - https://6ewcye3q4d.execute-api.us-east-1.amazonaws.com/
-functions:
-  hello: aws-python-http-api-dev-hello (2.3 kB)
+#### Teste da função hello (GET):
+```bash
+curl https://your-api-gateway-url.amazonaws.com/
 ```
 
-_Nota_: Na forma atual, após o deploy, sua API é pública e pode ser invocada por qualquer pessoa. Para deploys em produção, você pode querer configurar um autorizador. Para detalhes sobre como fazer isso, consulte a [documentação de eventos http](https://www.serverless.com/framework/docs/providers/aws/events/apigateway/).
-
-### Invocation
-
-Após o deploy bem-sucedido, você pode chamar a aplicação criada via HTTP:
-
-```
-curl https://xxxxxxx.execute-api.us-east-1.amazonaws.com/
+#### Teste da função SNS/SQS (POST):
+```bash
+curl -X POST https://your-api-gateway-url.amazonaws.com/sns \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Hello World", "data": {"key": "value"}}'
 ```
 
-Que deve resultar em uma resposta similar à seguinte:
+### 3. Monitoramento
 
-```json
-{
-  "message": "Go Serverless v4.0! Your function executed successfully!"
-}
-```
+- **CloudWatch Logs**: Verifique os logs das funções Lambda
+- **SQS Console**: Monitore mensagens na fila
+- **SNS Console**: Verifique mensagens no tópico
 
-### Local development
-
-Você pode invocar sua função localmente usando o seguinte comando:
+## Estrutura do Projeto
 
 ```
-serverless invoke local --function hello
+├── serverless.yml      # Configuração do Serverless Framework
+├── handler.py         # Funções Lambda
+├── requirements.txt   # Dependências Python
+└── README.md         # Este arquivo
 ```
 
-Que deve resultar em uma resposta similar à seguinte:
+## Funções Lambda
 
-```json
-{
-  "statusCode": 200,
-  "body": "{\n  \"message\": \"Go Serverless v4.0! Your function executed successfully!\"}"
-}
+### hello
+- **Trigger**: API Gateway HTTP GET `/`
+- **Função**: Retorna mensagem de boas-vindas
+- **Input**: Nenhum
+- **Output**: Mensagem de sucesso
+
+### apiHandler
+- **Trigger**: API Gateway HTTP POST `/sns`
+- **Função**: Recebe requisições e publica no SNS
+- **Input**: JSON body da requisição
+- **Output**: Confirmação de envio
+
+### sqsHandler
+- **Trigger**: SQS Queue
+- **Função**: Processa mensagens da fila
+- **Input**: Mensagens SQS (que vieram do SNS)
+- **Output**: Confirmação de processamento
+
+## Configurações
+
+### SQS
+- **Visibility Timeout**: 60 segundos
+- **Message Retention**: 14 dias
+- **Dead Letter Queue**: Após 3 tentativas de processamento
+
+### SNS
+- **Subscription**: Automática para a fila SQS
+- **Message Format**: JSON
+
+
+
+## Limpeza
+
+Para remover todos os recursos:
+
+```bash
+serverless remove
 ```
-
-Alternativamente, também é possível emular o API Gateway e Lambda localmente usando o plugin `serverless-offline`. Para fazer isso, execute o seguinte comando:
-
-```
-serverless plugin install -n serverless-offline
-```
-
-Isso irá adicionar o plugin `serverless-offline` às `devDependencies` no arquivo `package.json` e também adicioná-lo aos `plugins` no `serverless.yml`.
-
-Após a instalação, você pode iniciar a emulação local com:
-
-```
-serverless offline
-```
-
-Para saber mais sobre as capacidades do `serverless-offline`, consulte seu [repositório GitHub](https://github.com/dherault/serverless-offline).
-
-### Bundling dependencies
-
-Caso você queira incluir dependências de terceiros, você precisará usar um plugin chamado `serverless-python-requirements`. Você pode configurá-lo executando o seguinte comando:
-
-```
-serverless plugin install -n serverless-python-requirements
-```
-
-Executar o comando acima irá automaticamente adicionar `serverless-python-requirements` à seção `plugins` no seu arquivo `serverless.yml` e adicioná-lo como uma `devDependency` no arquivo `package.json`. O arquivo `package.json` será automaticamente criado se não existir. Agora você poderá adicionar suas dependências ao arquivo `requirements.txt` (`Pipfile` e `pyproject.toml` também são suportados, mas requerem configuração adicional) e elas serão automaticamente injetadas no pacote Lambda durante o processo de build. Para mais detalhes sobre a configuração do plugin, consulte a [documentação oficial](https://github.com/UnitedIncome/serverless-python-requirements).
 
 ## GitHub Actions - Deploy Automático
 
@@ -108,6 +130,8 @@ Este projeto está configurado para fazer deploy automático usando GitHub Actio
    - API Gateway
    - CloudFormation
    - IAM (para criar roles)
+   - SNS
+   - SQS
 
 2. **Conta Serverless Framework** (gratuita para projetos pessoais)
 
@@ -196,4 +220,6 @@ on:
 1. Configure os secrets no GitHub
 2. Faça push para a branch `main`
 3. Verifique se o deploy foi executado com sucesso
-4. Acesse o endpoint da API gerado
+4. Acesse os endpoints da API gerados:
+   - GET `/` - Função hello
+   - POST `/sns` - Função SNS/SQS
