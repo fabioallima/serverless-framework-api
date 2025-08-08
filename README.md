@@ -82,12 +82,12 @@ curl -X POST https://your-api-gateway-url.amazonaws.com/api \
 │   ├── api_handler.py              # Função API Gateway → SNS
 │   └── sqs_handler.py              # Função SQS → Processamento
 └── serverless/                     # Configurações do Serverless organizadas
-    ├── functions/                  # Configurações das funções independentes
-    │   ├── hello.yml               # Configuração da função hello
-    │   └── apiHandler.yml          # Configuração da função API handler
-    └── resources/                  # Recursos AWS e suas funções relacionadas
+    ├── functions/                  # Configurações das funções Lambda (cada arquivo = 1 Lambda)
+    │   ├── hello.yml               # Lambda hello (GET /)
+    │   └── api.yml                 # Lambda API completa (apiHandler + sqsHandler)
+    └── resources/                  # Recursos AWS organizados
         ├── sns.yml                 # Recursos SNS (tópico e subscription)
-        └── sqs.yml                 # Recursos SQS + função sqsHandler (filas, políticas e trigger)
+        └── sqs.yml                 # Recursos SQS (filas e políticas)
 ```
 
 ## Funções Lambda

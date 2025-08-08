@@ -1,15 +1,4 @@
-# Função Lambda que processa mensagens da fila SQS
-functions:
-  sqsHandler:
-    handler: functions/sqs_handler.sqs_handler
-    events:
-      - sqs:
-          arn: !GetAtt SQSQueue.Arn
-          batchSize: 1
-
-# Recursos SQS
-resources:
-  Resources:
+Resources:
     SQSQueue:
       Type: AWS::SQS::Queue
       Properties:
