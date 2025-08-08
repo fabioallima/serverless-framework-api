@@ -22,8 +22,8 @@ provider:
           Resource: !GetAtt SQSQueue.Arn
 
 functions:
-  ${file(serverless/functions/hello.yml)}
-  ${file(serverless/functions/apiHandler.yml)}
+  - ${file(serverless/functions/hello.yml)}
+  - ${file(serverless/functions/apiHandler.yml)}
 
 resources:
   - ${file(serverless/resources/sns.yml)}
