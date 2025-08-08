@@ -1,0 +1,8 @@
+apiHandler:
+  handler: functions/api_handler.api_handler
+  environment:
+    SNSTopicArn: !Ref SNSTopic
+  events:
+    - httpApi:
+        path: /api
+        method: post

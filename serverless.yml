@@ -21,73 +21,8 @@ provider:
             - sqs:GetQueueAttributes
           Resource: !GetAtt SQSQueue.Arn
 
-functions:
-  hello:
-    handler: handler.hello
-    events:
-      - httpApi:
-          path: /
-          method: get
-  
-  apiHandler:
-    handler: handler.api_handler
-    environment:
-      SNSTopicArn: !Ref SNSTopic
-    events:
-      - httpApi:
-          path: /sns
-          method: post
-  
-  sqsHandler:
-    handler: handler.sqs_handler
-    events:
-      - sqs:
-          arn: !GetAtt SQSQueue.Arn
-          batchSize: 1
+functions: ${file(serverless/functions/hello.yml), file(serverless/functions/apiHandler.yml)}
 
 resources:
-  Resources:
-    SNSTopic:
-      Type: AWS::SNS::Topic
-      Properties:
-        TopicName: ${self:service}-topic
-        DisplayName: ${self:service} Topic
-    
-    SQSQueue:
-      Type: AWS::SQS::Queue
-      Properties:
-        QueueName: ${self:service}-queue
-        VisibilityTimeout: 60
-        MessageRetentionPeriod: 1209600
-        RedrivePolicy:
-          deadLetterTargetArn: !GetAtt SQSDeadLetterQueue.Arn
-          maxReceiveCount: 3
-    
-    SQSDeadLetterQueue:
-      Type: AWS::SQS::Queue
-      Properties:
-        QueueName: ${self:service}-dlq
-    
-    SQSQueuePolicy:
-      Type: AWS::SQS::QueuePolicy
-      Properties:
-        Queues:
-          - !Ref SQSQueue
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-            - Effect: Allow
-              Principal:
-                Service: sns.amazonaws.com
-              Action: sqs:SendMessage
-              Resource: !GetAtt SQSQueue.Arn
-              Condition:
-                ArnEquals:
-                  aws:SourceArn: !Ref SNSTopic
-    
-    SNSTopicSubscription:
-      Type: AWS::SNS::Subscription
-      Properties:
-        TopicArn: !Ref SNSTopic
-        Protocol: sqs
-        Endpoint: !GetAtt SQSQueue.Arn
+  - ${file(serverless/resources/sns.yml)}
+  - ${file(serverless/resources/sqs.yml)}

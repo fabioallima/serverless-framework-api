@@ -56,9 +56,9 @@ Após o deploy, você receberá uma URL do API Gateway. Use-a para testar:
 curl https://your-api-gateway-url.amazonaws.com/
 ```
 
-#### Teste da função SNS/SQS (POST):
+#### Teste da API (POST):
 ```bash
-curl -X POST https://your-api-gateway-url.amazonaws.com/sns \
+curl -X POST https://your-api-gateway-url.amazonaws.com/api \
   -H "Content-Type: application/json" \
   -d '{"message": "Hello World", "data": {"key": "value"}}'
 ```
@@ -72,10 +72,22 @@ curl -X POST https://your-api-gateway-url.amazonaws.com/sns \
 ## Estrutura do Projeto
 
 ```
-├── serverless.yml      # Configuração do Serverless Framework
-├── handler.py         # Funções Lambda
-├── requirements.txt   # Dependências Python
-└── README.md         # Este arquivo
+├── serverless.yml                    # Configuração principal do Serverless Framework
+├── handler.py                       # Arquivo de compatibilidade (importa das funções organizadas)
+├── requirements.txt                 # Dependências Python
+├── README.md                       # Este arquivo
+├── functions/                      # Funções Lambda organizadas
+│   ├── __init__.py                 # Torna a pasta um pacote Python
+│   ├── hello.py                    # Função hello
+│   ├── api_handler.py              # Função API Gateway → SNS
+│   └── sqs_handler.py              # Função SQS → Processamento
+└── serverless/                     # Configurações do Serverless organizadas
+    ├── functions/                  # Configurações das funções independentes
+    │   ├── hello.yml               # Configuração da função hello
+    │   └── apiHandler.yml          # Configuração da função API handler
+    └── resources/                  # Recursos AWS e suas funções relacionadas
+        ├── sns.yml                 # Recursos SNS (tópico e subscription)
+        └── sqs.yml                 # Recursos SQS + função sqsHandler (filas, políticas e trigger)
 ```
 
 ## Funções Lambda
@@ -87,7 +99,7 @@ curl -X POST https://your-api-gateway-url.amazonaws.com/sns \
 - **Output**: Mensagem de sucesso
 
 ### apiHandler
-- **Trigger**: API Gateway HTTP POST `/sns`
+- **Trigger**: API Gateway HTTP POST `/api`
 - **Função**: Recebe requisições e publica no SNS
 - **Input**: JSON body da requisição
 - **Output**: Confirmação de envio
@@ -222,4 +234,4 @@ on:
 3. Verifique se o deploy foi executado com sucesso
 4. Acesse os endpoints da API gerados:
    - GET `/` - Função hello
-   - POST `/sns` - Função SNS/SQS
+   - POST `/api` - API que processa via SNS/SQS

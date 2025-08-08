@@ -1,0 +1,6 @@
+hello:
+  handler: functions/hello.hello
+  events:
+    - httpApi:
+        path: /
+        method: get

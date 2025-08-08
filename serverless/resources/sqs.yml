@@ -1,0 +1,43 @@
+# Função Lambda que processa mensagens da fila SQS
+functions:
+  sqsHandler:
+    handler: functions/sqs_handler.sqs_handler
+    events:
+      - sqs:
+          arn: !GetAtt SQSQueue.Arn
+          batchSize: 1
+
+# Recursos SQS
+resources:
+  Resources:
+    SQSQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-queue
+        VisibilityTimeout: 60
+        MessageRetentionPeriod: 1209600
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt SQSDeadLetterQueue.Arn
+          maxReceiveCount: 3
+    
+    SQSDeadLetterQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-dlq
+    
+    SQSQueuePolicy:
+      Type: AWS::SQS::QueuePolicy
+      Properties:
+        Queues:
+          - !Ref SQSQueue
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: sns.amazonaws.com
+              Action: sqs:SendMessage
+              Resource: !GetAtt SQSQueue.Arn
+              Condition:
+                ArnEquals:
+                  aws:SourceArn: !Ref SNSTopic
